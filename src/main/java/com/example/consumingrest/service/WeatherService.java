@@ -23,6 +23,8 @@ public class WeatherService {
     private final Logger logger = LoggerFactory.getLogger(WeatherService.class);
     private final CacheManager cacheManager;
     private WeatherJdbc weatherJdbc;
+    @Value("${caching.spring.citiesTTL}")
+    private long cacheTimeOut;
 
     @Autowired
     public WeatherService(RestTemplate restTemplate, CacheManager cacheManager, WeatherJdbc weatherJdbc) {
@@ -38,22 +40,21 @@ public class WeatherService {
 
 //    @Cacheable(value = "cities", key = "#city")
     public SimpleWeatherResponse getSimpleWeatherResponse(String city) {
-        List<SimpleWeatherResponse> simpleWeatherResponses = weatherJdbc.listSimpleWeatherResponse();
+        List<SimpleWeatherResponse> simpleWeatherResponses = weatherJdbc.listSimpleWeatherResponseByCity(city);
         if(simpleWeatherResponses.isEmpty()){
             return cashingData(city);
         }
-        else if(simpleWeatherResponses.get(0).getCashedTime().plusMinutes(1).isAfter(LocalDateTime.now())){
+        else if(simpleWeatherResponses.get(0).getCashedTime().plusMinutes(cacheTimeOut).isAfter(LocalDateTime.now())){
             logger.info("Getting data from database");
-            return weatherJdbc.listSimpleWeatherResponse().get(0);
+            return simpleWeatherResponses.get(0);
         }
-        weatherJdbc.deleteWeatherResponse();
+        weatherJdbc.deleteWeatherResponseByCity(city);
         return cashingData(city);
     }
 
     private SimpleWeatherResponse cashingData(String city) {
         SimpleWeatherResponse simpleWeatherResponse = callApi(city);
         weatherJdbc.add(simpleWeatherResponse);
-        logger.info("Getting data from API");
         return simpleWeatherResponse;
     }
 

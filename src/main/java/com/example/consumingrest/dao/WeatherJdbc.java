@@ -24,14 +24,14 @@ public class WeatherJdbc {
                 simpleWeatherResponse.getCashedTime());
     }
 
-    public List<SimpleWeatherResponse> listSimpleWeatherResponse(){
-        String sql = "SELECT * FROM WEATHER";
-        return jdbcTemplate.query(sql, weatherMapper);
+    public List<SimpleWeatherResponse> listSimpleWeatherResponseByCity(String city){
+        String sql = "SELECT * FROM WEATHER WHERE city = ?";
+        return jdbcTemplate.query(sql, weatherMapper, city);
     }
 
-    public void deleteWeatherResponse(){
-        String sql = "DELETE FROM WEATHER";
-        jdbcTemplate.update(sql);
+    public void deleteWeatherResponseByCity(String city){
+        String sql = "DELETE FROM WEATHER WHERE city = ?";
+        jdbcTemplate.update(sql, city);
     }
 
 
